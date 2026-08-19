@@ -217,7 +217,7 @@ pytest -v backend/tests
 
 ---
 
-## 8. Demo Golden Path (30-Minute Interview Walkthrough)
+## 8. (Demo Walkthrough)
 
 1. **Open Frontend (`http://localhost:5173`)**: Notice the 1-click **Demo Switcher Ribbon** at the top.
 2. **Customer Persona (Rahul Sharma)**:
