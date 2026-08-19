@@ -4,13 +4,12 @@ import { authApi } from '../api/authApi';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   role: UserRole | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName: string, role?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   switchUser: (role: UserRole) => Promise<void>;
   isLoading: boolean;
 }
@@ -18,28 +17,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('kpitech_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('kpitech_token'));
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Validate active session on initial load using the secure HttpOnly cookie
   useEffect(() => {
     const initAuth = async () => {
-      const savedToken = localStorage.getItem('kpitech_token');
-      if (savedToken) {
-        try {
-          const res = await authApi.getMe();
-          if (res.success && res.data) {
-            setUser(res.data);
-            localStorage.setItem('kpitech_user', JSON.stringify(res.data));
-          }
-        } catch {
-          logout();
+      // Clear any legacy insecure localStorage entries
+      localStorage.removeItem('kpitech_token');
+      localStorage.removeItem('kpitech_user');
+
+      try {
+        const res = await authApi.getMe();
+        if (res.success && res.data) {
+          setUser(res.data);
         }
+      } catch {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     initAuth();
   }, []);
@@ -47,28 +44,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     const res = await authApi.login(email, password);
     if (res.success && res.data) {
-      setToken(res.data.access_token);
       setUser(res.data.user);
-      localStorage.setItem('kpitech_token', res.data.access_token);
-      localStorage.setItem('kpitech_user', JSON.stringify(res.data.user));
     }
   };
 
   const register = async (email: string, password: string, fullName: string, role: string = 'customer') => {
     const res = await authApi.register(email, password, fullName, role);
     if (res.success && res.data) {
-      setToken(res.data.access_token);
       setUser(res.data.user);
-      localStorage.setItem('kpitech_token', res.data.access_token);
-      localStorage.setItem('kpitech_user', JSON.stringify(res.data.user));
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('kpitech_token');
-    localStorage.removeItem('kpitech_user');
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      setUser(null);
+    }
   };
 
   const switchUser = async (targetRole: UserRole) => {
@@ -80,14 +74,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const role = user ? (user.role as UserRole) : null;
-  const isAuthenticated = !!token && !!user;
+  const isAuthenticated = !!user;
   const isAdmin = role === 'admin';
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
         role,
         isAuthenticated,
         isAdmin,

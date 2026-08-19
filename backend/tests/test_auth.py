@@ -2,7 +2,7 @@
 User Authentication and Authorization Integration Tests.
 
 Use Case:
-- Validates user registration flow, duplicate email prevention, password verification, and session token resolution.
+- Validates user registration flow, duplicate email prevention, password verification, HttpOnly cookie setting, and session token resolution.
 """
 
 import pytest
@@ -12,13 +12,14 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_user_registration_and_login(client: AsyncClient):
     """
-    Test Case: Complete authentication lifecycle.
+    Test Case: Complete authentication lifecycle with HttpOnly cookie and Bearer token fallback.
 
     Use Case:
-    - 1. Registers new customer account and receives JWT token.
+    - 1. Registers new customer account and receives JWT token + sets HttpOnly cookie.
     - 2. Asserts conflict exception (HTTP 409) on duplicate registration.
     - 3. Tests login endpoint with valid credentials.
     - 4. Accesses protected `/api/auth/me` endpoint using bearer token.
+    - 5. Tests logout endpoint to clear session cookie.
     """
     # 1. Register new customer
     reg_payload = {
@@ -33,6 +34,7 @@ async def test_user_registration_and_login(client: AsyncClient):
     assert body["success"] is True
     assert "access_token" in body["data"]
     assert body["data"]["user"]["email"] == "newuser@example.com"
+    assert "access_token" in res.cookies  # Verify HttpOnly cookie was set
     token = body["data"]["access_token"]
 
     # 2. Prevent duplicate email registration
@@ -49,14 +51,20 @@ async def test_user_registration_and_login(client: AsyncClient):
     assert login_res.status_code == 200
     assert login_res.json()["success"] is True
     assert "access_token" in login_res.json()["data"]
+    assert "access_token" in login_res.cookies  # Verify HttpOnly cookie was set
 
-    # 4. Profile /me endpoint
+    # 4. Profile /me endpoint via Bearer header
     me_res = await client.get(
         "/api/auth/me",
         headers={"Authorization": f"Bearer {token}"}
     )
     assert me_res.status_code == 200
     assert me_res.json()["data"]["email"] == "newuser@example.com"
+
+    # 5. Logout endpoint
+    logout_res = await client.post("/api/auth/logout")
+    assert logout_res.status_code == 200
+    assert logout_res.json()["success"] is True
 
 
 @pytest.mark.asyncio

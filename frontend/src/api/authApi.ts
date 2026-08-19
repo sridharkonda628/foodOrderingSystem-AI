@@ -21,6 +21,10 @@ export const authApi = {
     });
     return res.data;
   },
+  logout: async () => {
+    const res = await apiClient.post<ApiResponse<Record<string, never>>>('/auth/logout');
+    return res.data;
+  },
   getMe: async () => {
     const res = await apiClient.get<ApiResponse<User>>('/auth/me');
     return res.data;

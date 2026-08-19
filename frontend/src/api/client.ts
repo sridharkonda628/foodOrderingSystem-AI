@@ -2,33 +2,24 @@ import axios from 'axios';
 
 export const API_BASE_URL = 'http://localhost:8000/api';
 
+/**
+ * Axios API client configured with:
+ * - `withCredentials: true`: Automatically sends and receives secure `HttpOnly` cookies.
+ * - Centralized response error handling.
+ */
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true, // Enables secure HttpOnly cookie transmission across requests
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor: attach JWT token if present
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('kpitech_token');
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Response interceptor: handle errors
+// Response interceptor: handle session expiration (401 Unauthorized)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Don't auto redirect on login page
-      if (!window.location.pathname.includes('/login')) {
-        localStorage.removeItem('kpitech_token');
-        localStorage.removeItem('kpitech_user');
-      }
-    }
+    // Return structured error
     return Promise.reject(error);
   }
 );

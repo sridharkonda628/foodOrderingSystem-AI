@@ -3,13 +3,13 @@ FastAPI Route Dependencies and Security Injections.
 
 Use Case:
 - Provides dependency injection utilities for authentication, role verification, and database sessions:
-  1. `get_current_user`: Validates JWT bearer tokens and resolves active User entities.
+  1. `get_current_user`: Validates JWT tokens from Authorization Bearer headers or secure HttpOnly cookies, and resolves active User entities.
   2. `get_current_active_admin`: Enforces that the authenticated user possesses the 'admin' role.
   3. `get_optional_current_user`: Safely retrieves user profile if token is provided, without failing on guest visits.
 """
 
 from typing import Optional
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import UnauthorizedException, ForbiddenException
@@ -23,6 +23,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=Fals
 
 
 async def get_current_user(
+    request: Request,
     token: Optional[str] = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
 ) -> User:
@@ -31,10 +32,14 @@ async def get_current_user(
 
     Use Case:
     - Injected into protected routes (e.g. `/api/orders`, `/api/auth/me`).
+    - Checks for JWT in:
+      1. `Authorization: Bearer <token>` header - For programmatic API clients, tests, and Swagger.
+      2. Secure `HttpOnly` cookie (`access_token`) - For secure browser sessions resistant to XSS.
     - Validates token signature, expiration, user existence, and active account status.
 
     Parameters:
-    - token: Bearer token extracted from Authorization header.
+    - request: Incoming FastAPI Request object (to access HttpOnly cookies).
+    - token: Bearer token extracted from Authorization header if present.
     - db: Injected async database session.
 
     Returns:
@@ -43,10 +48,17 @@ async def get_current_user(
     Raises:
     - UnauthorizedException: If token is missing, expired, invalid, or if user is deactivated.
     """
-    if not token:
+    # 1. Primary: Extract from explicit Authorization header if provided
+    auth_token = token
+    
+    # 2. Fallback: Extract from secure HttpOnly cookie
+    if not auth_token:
+        auth_token = request.cookies.get("access_token")
+
+    if not auth_token:
         raise UnauthorizedException("Authentication token is missing. Please log in.")
     
-    payload = decode_access_token(token)
+    payload = decode_access_token(auth_token)
     if not payload:
         raise UnauthorizedException("Session expired or token is invalid. Please log in again.")
     
@@ -88,6 +100,7 @@ async def get_current_active_admin(
 
 
 async def get_optional_current_user(
+    request: Request,
     token: Optional[str] = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
 ) -> Optional[User]:
@@ -95,19 +108,21 @@ async def get_optional_current_user(
     FastAPI dependency for endpoints accessible to both guests and authenticated users.
 
     Use Case:
-    - Allows personalizing responses if a token is present while allowing unauthenticated guest access.
+    - Allows personalizing responses if an Authorization header or HttpOnly cookie is present, while allowing unauthenticated guest access.
 
     Parameters:
+    - request: Incoming FastAPI Request object.
     - token: Optional bearer token.
     - db: Injected async database session.
 
     Returns:
     - User entity if token is valid, None otherwise.
     """
-    if not token:
+    auth_token = token or request.cookies.get("access_token")
+    if not auth_token:
         return None
     try:
-        payload = decode_access_token(token)
+        payload = decode_access_token(auth_token)
         if not payload:
             return None
         user_id = payload.get("sub")
