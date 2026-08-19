@@ -1,3 +1,12 @@
+"""
+Deterministic Rule-Based NLP Intent Extractor.
+
+Use Case:
+- Provides robust, zero-cost natural language intent extraction without requiring an external OpenAI API key.
+- Serves as the primary engine in offline/development mode and as an instant fallback if live LLM calls timeout or fail.
+- Uses regex patterns, dietary keyword dictionaries, and stop-word filtering to extract structured constraints.
+"""
+
 import re
 from typing import List, Optional
 from app.ai.base import AIProvider
@@ -6,13 +15,30 @@ from app.schemas.search import SearchIntent
 
 class MockAIProvider(AIProvider):
     """
-    Rule-based NLP Intent Extractor that mimics LLM structured output.
-    Used for local testing, zero-cost development, and deterministic fallback.
+    Rule-based NLP Intent Extractor that mimics LLM structured JSON output.
+
+    Use Case:
+    - Extracts price ceilings (e.g. "under 200", "below ₹300"), vegetarian/non-veg flags,
+      spiciness levels, dietary preferences ("high protein", "light", "non-fried"),
+      and meal categories from natural language.
     """
+
     async def extract_intent(self, query: str) -> SearchIntent:
+        """
+        Parses natural language query into structured SearchIntent using deterministic NLP rules.
+
+        Use Case:
+        - Primary NLP extraction for local development/testing and fallback for live LLM failures.
+
+        Parameters:
+        - query: Raw search query string.
+
+        Returns:
+        - SearchIntent model with extracted filters and keywords.
+        """
         q = query.lower().strip()
 
-        # 1. Price extraction (e.g. "under 200", "below 300", "< 150", "under ₹250")
+        # 1. Price ceiling extraction (e.g. "under 200", "below 300", "< 150", "under ₹250", "budget")
         max_price: Optional[float] = None
         price_match = re.search(r"(?:under|below|less than|<|within|upto|up to)\s*(?:rs\.?|inr|₹)?\s*(\d+)", q)
         if price_match:
@@ -75,7 +101,7 @@ class MockAIProvider(AIProvider):
             "and", "with", "without", "that", "is", "not", "too", "give", "me", "find",
             "show", "want", "like", "food", "dish", "dishes", "item", "items", "please"
         }
-        tokens = re.findall(r"[a-zA-Z]{3,}", q)
+        tokens = re.findall(r"\b[a-zA-Z]{3,}\b", q)
         extracted_keywords = [t for t in tokens if t not in stop_words]
 
         return SearchIntent(
@@ -100,6 +126,24 @@ class MockAIProvider(AIProvider):
         is_vegetarian: bool,
         is_spicy: bool
     ) -> str:
+        """
+        Generates deterministic, clear explanation of why the dish was matched.
+
+        Use Case:
+        - Displays summary match reasons on UI search cards (e.g. "Vegetarian, High protein at ₹190").
+
+        Parameters:
+        - query: Original search query.
+        - item_name: Name of the dish.
+        - item_desc: Description of the dish.
+        - dietary_tags: List of tags associated with dish.
+        - price: Dish price.
+        - is_vegetarian: Boolean veg flag.
+        - is_spicy: Boolean spicy flag.
+
+        Returns:
+        - Formatted explanation string.
+        """
         reasons = []
         if is_vegetarian:
             reasons.append("Vegetarian")

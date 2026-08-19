@@ -1,3 +1,16 @@
+"""
+AI-Powered Natural Language Menu Search Service.
+
+Use Case:
+- Orchestrates the end-to-end intelligent search pipeline:
+  1. Fast Query Cache lookup to return instantaneous responses for frequent searches.
+  2. Natural language intent extraction via OpenAI LLM with automatic graceful fallback to deterministic NLP.
+  3. Efficient database candidate filtering based on extracted hard constraints (max price, veg flag, spiciness).
+  4. Hybrid multi-signal ranking (semantic token overlap, keyword matching, dietary preferences/avoidance, popularity).
+  5. Generating concise, context-aware match explanations for each returned dish.
+  6. Writing results to the in-memory query cache with TTL.
+"""
+
 import time
 import logging
 from typing import List, Optional
@@ -22,8 +35,21 @@ logger = logging.getLogger("kpitech_food_order")
 
 
 class MenuSearchService:
+    """
+    Orchestration service for AI natural language menu search.
+    """
+
     @staticmethod
     def get_ai_provider() -> AIProvider:
+        """
+        Factory method returning the active AI intent provider.
+
+        Use Case:
+        - Selects OpenAIProvider if configured with an API key, otherwise uses MockAIProvider.
+
+        Returns:
+        - AIProvider implementation instance.
+        """
         if settings.AI_PROVIDER == "openai" and settings.OPENAI_API_KEY:
             return OpenAIProvider()
         return MockAIProvider()
@@ -34,6 +60,29 @@ class MenuSearchService:
         db: AsyncSession,
         request: SearchQueryRequest
     ) -> SearchResponseData:
+        """
+        Executes an intelligent natural language search across the restaurant menu.
+
+        Use Case:
+        - Handles customer search queries such as:
+          - "spicy paneer under 200"
+          - "healthy high protein lunch non-fried"
+          - "something light without dairy"
+        - Pipeline execution:
+          Step 1: Check SHA-256 normalized query cache.
+          Step 2: Extract structured intent (OpenAI / Mock fallback).
+          Step 3: Query SQL candidate items with hard filters.
+          Step 4: Rank candidates with multi-signal scoring formula.
+          Step 5: Attach match explanations and visual badge highlights.
+          Step 6: Cache response and return.
+
+        Parameters:
+        - db: The active async database session.
+        - request: SearchQueryRequest containing raw query string and result limit.
+
+        Returns:
+        - SearchResponseData containing detected intent, search mode, execution latency, and ranked items.
+        """
         start_time = time.perf_counter()
         raw_query = request.query.strip()
         normalized_query = " ".join(raw_query.lower().split())
@@ -72,10 +121,10 @@ class MenuSearchService:
             items=candidates
         )
 
-        # Apply Limit
+        # Apply user-specified limit
         top_items = ranked_candidates[: request.limit]
 
-        # 5. Generate Match Explanations
+        # 5. Generate Match Explanations & Badge Highlights
         scored_results: List[ScoredMenuItemOut] = []
         for item, score, highlights in top_items:
             try:
@@ -124,7 +173,7 @@ class MenuSearchService:
             items=scored_results
         )
 
-        # Store in cache for 5 minutes
+        # Store in cache for 5 minutes (300 seconds)
         search_cache.set(normalized_query, response_data, ttl_seconds=300)
 
         return response_data

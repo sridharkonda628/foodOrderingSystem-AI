@@ -1,5 +1,4 @@
 import React from 'react';
-import { Sparkles, Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -10,9 +9,7 @@ export const Footer: React.FC = () => {
           <span>•</span>
           <span>Food Ordering with AI Natural Language Menu Search</span>
         </div>
-        <div className="text-xs text-slate-400">
-          KPi-Tech Services Inc. — AI Software Engineer Hiring Assessment
-        </div>
+
       </div>
     </footer>
   );

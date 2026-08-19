@@ -1,17 +1,32 @@
+"""
+Admin Dashboard Metrics Integration Tests.
+
+Use Case:
+- Validates role-based authorization for the Restaurant Manager Dashboard (customers blocked with 403, admins permitted).
+- Asserts presence and integrity of aggregated analytics (KPI summaries, status counts, top-sellers, and recent orders).
+"""
+
 import pytest
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
 async def test_admin_dashboard_metrics(client: AsyncClient, admin_token: str, customer_token: str):
-    # Customer rejected
+    """
+    Test Case: Dashboard access control and metric computation.
+
+    Use Case:
+    - 1. Verifies that customers are rejected with HTTP 403 Forbidden.
+    - 2. Verifies that admins successfully receive aggregated operational metrics and orders.
+    """
+    # 1. Customer rejected with 403 Forbidden
     cust_res = await client.get(
         "/api/admin/dashboard",
         headers={"Authorization": f"Bearer {customer_token}"}
     )
     assert cust_res.status_code == 403
 
-    # Admin access
+    # 2. Admin access granted
     admin_res = await client.get(
         "/api/admin/dashboard",
         headers={"Authorization": f"Bearer {admin_token}"}
@@ -19,6 +34,7 @@ async def test_admin_dashboard_metrics(client: AsyncClient, admin_token: str, cu
     assert admin_res.status_code == 200
     data = admin_res.json()["data"]
     
+    # Assert metric fields
     assert "summary" in data
     assert "total_orders_today" in data["summary"]
     assert "total_revenue_today" in data["summary"]

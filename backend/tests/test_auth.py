@@ -1,9 +1,25 @@
+"""
+User Authentication and Authorization Integration Tests.
+
+Use Case:
+- Validates user registration flow, duplicate email prevention, password verification, and session token resolution.
+"""
+
 import pytest
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
 async def test_user_registration_and_login(client: AsyncClient):
+    """
+    Test Case: Complete authentication lifecycle.
+
+    Use Case:
+    - 1. Registers new customer account and receives JWT token.
+    - 2. Asserts conflict exception (HTTP 409) on duplicate registration.
+    - 3. Tests login endpoint with valid credentials.
+    - 4. Accesses protected `/api/auth/me` endpoint using bearer token.
+    """
     # 1. Register new customer
     reg_payload = {
         "email": "newuser@example.com",
@@ -45,6 +61,12 @@ async def test_user_registration_and_login(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_invalid_login_credentials(client: AsyncClient):
+    """
+    Test Case: Invalid login credentials rejection.
+
+    Use Case:
+    - Verifies that wrong passwords return HTTP 401 Unauthorized with code 'UNAUTHORIZED'.
+    """
     res = await client.post(
         "/api/auth/login",
         json={"email": "admin@kpitech.com", "password": "WrongPassword!"}

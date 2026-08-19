@@ -1,3 +1,12 @@
+"""
+System Health and AI Subsystem Observability Endpoints.
+
+Use Case:
+- Provides operational readiness and liveness probes:
+  1. GET `/api/health`: Database connectivity and backend service status.
+  2. GET `/api/health/ai`: AI NLP subsystem configuration and availability status.
+"""
+
 import time
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
@@ -11,6 +20,18 @@ router = APIRouter(prefix="/health", tags=["Health & Observability"])
 
 @router.get("", response_model=APIResponse[dict])
 async def health_check(db: AsyncSession = Depends(get_db)):
+    """
+    Performs overall system and database health check.
+
+    Use Case:
+    - Used by container orchestration (Docker/Kubernetes) or monitoring dashboards for health probes.
+
+    Parameters:
+    - db: Async database session.
+
+    Returns:
+    - APIResponse with service status, database connectivity, and timestamp.
+    """
     db_status = "healthy"
     try:
         await db.execute(text("SELECT 1"))
@@ -32,6 +53,15 @@ async def health_check(db: AsyncSession = Depends(get_db)):
 
 @router.get("/ai", response_model=APIResponse[dict])
 async def ai_health_check():
+    """
+    Checks the status and active provider configuration of the AI NLP subsystem.
+
+    Use Case:
+    - Verifies whether OpenAI API key is supplied or if the system is running in mock deterministic mode.
+
+    Returns:
+    - APIResponse with AI provider configuration details.
+    """
     provider_type = settings.AI_PROVIDER
     is_ready = True
     details = "Mock NLP provider ready"

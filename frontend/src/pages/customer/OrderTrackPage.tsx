@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { orderApi } from '../../api/orderApi';
 import { Order } from '../../types';
@@ -44,40 +44,40 @@ export const OrderTrackPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <Link
         to="/orders"
-        className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800 mb-6 transition"
+        className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800 mb-4 sm:mb-6 transition"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Orders
+        <span>Back to Orders</span>
       </Link>
 
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mb-6 pb-4 border-b border-slate-200">
         <div>
-          <span className="text-xs font-bold text-orange-600 uppercase tracking-wider block">Live Order Tracker</span>
-          <h1 className="text-2xl font-black text-slate-900 mt-0.5">Order #{order.id.slice(0, 8)}</h1>
+          <span className="text-[11px] sm:text-xs font-bold text-orange-600 uppercase tracking-wider block">Live Order Tracker</span>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">Order #{order.id.slice(0, 8)}</h1>
         </div>
-        <div className="text-right">
-          <span className="text-xs text-slate-400 block">Total Amount</span>
-          <span className="text-xl font-black text-slate-900">₹{order.total_amount}</span>
+        <div className="text-left sm:text-right">
+          <span className="text-[11px] sm:text-xs text-slate-400 block">Total Amount</span>
+          <span className="text-lg sm:text-xl font-black text-slate-900">₹{order.total_amount}</span>
         </div>
       </div>
 
       <OrderTimeline status={order.status} />
 
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs mt-6">
-        <h3 className="font-extrabold text-base text-slate-900 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
-          <ShoppingBag className="w-4 h-4 text-orange-600" />
-          Dishes in this Order
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-xs mt-6">
+        <h3 className="font-extrabold text-sm sm:text-base text-slate-900 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
+          <ShoppingBag className="w-4 h-4 text-orange-600 shrink-0" />
+          <span>Dishes in this Order</span>
         </h3>
 
         <div className="divide-y divide-slate-100">
           {order.items.map((it) => (
-            <div key={it.id} className="py-3 flex justify-between items-center text-sm">
+            <div key={it.id} className="py-2.5 sm:py-3 flex justify-between items-center text-xs sm:text-sm">
               <div className="flex items-center gap-2">
                 <span
-                  className={`w-3.5 h-3.5 rounded-xs flex items-center justify-center border text-[8px] font-bold ${
+                  className={`w-3.5 h-3.5 rounded-xs flex items-center justify-center border text-[8px] font-bold shrink-0 ${
                     it.is_vegetarian
                       ? 'border-emerald-600 text-emerald-600'
                       : 'border-rose-600 text-rose-600'

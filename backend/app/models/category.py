@@ -1,3 +1,11 @@
+"""
+Category Database Model.
+
+Use Case:
+- Defines the `categories` table representing restaurant menu sections (e.g. Starters, Main Course, Biryani).
+- Supports display ordering, active status toggling, and one-to-many relationship with `MenuItem`.
+"""
+
 from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -5,6 +13,12 @@ from app.db.base import Base
 
 
 class Category(Base):
+    """
+    Category ORM Entity.
+
+    Use Case:
+    - Organizes food items into logical customer-facing sections with display priority.
+    """
     __tablename__ = "categories"
 
     id: Mapped[int] = mapped_column(
@@ -43,5 +57,5 @@ class Category(Base):
         nullable=False
     )
 
-    # Relationships
+    # Relationships: One Category has many MenuItems (cascade deletes orphaned items)
     menu_items = relationship("MenuItem", back_populates="category", cascade="all, delete-orphan")

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { orderApi } from '../../api/orderApi';
 import { Order } from '../../types';
@@ -43,10 +43,10 @@ export const OrdersPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-6 flex items-center gap-2.5">
-        <ClipboardList className="w-7 h-7 text-orange-600" />
-        My Orders History
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 mb-6 flex items-center gap-2.5">
+        <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 text-orange-600 shrink-0" />
+        <span>My Orders History</span>
       </h1>
 
       {isLoading ? (
@@ -56,13 +56,13 @@ export const OrdersPage: React.FC = () => {
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8">
-          <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+        <div className="text-center py-12 sm:py-16 bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
+          <ClipboardList className="w-10 h-10 sm:w-12 sm:h-12 text-slate-300 mx-auto mb-3" />
           <h3 className="font-extrabold text-slate-800 text-base">No orders placed yet</h3>
           <p className="text-xs text-slate-500 mt-1 mb-4">Discover our tasty dishes and place your first order!</p>
           <Link
             to="/menu"
-            className="inline-flex items-center gap-2 bg-orange-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs hover:bg-orange-700"
+            className="inline-flex items-center gap-2 bg-orange-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs hover:bg-orange-700 transition"
           >
             Browse Menu
           </Link>
@@ -79,25 +79,25 @@ export const OrdersPage: React.FC = () => {
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-orange-300 transition"
+                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-orange-300 transition"
               >
                 <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${statusClass}`}>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-black uppercase tracking-wider border ${statusClass}`}>
                       {order.status.replace('_', ' ')}
                     </span>
                     <span className="text-xs text-slate-400 font-medium">#{order.id.slice(0, 8)}</span>
-                    <span className="text-xs text-slate-400">•</span>
-                    <span className="text-xs text-slate-500">{formattedDate}</span>
+                    <span className="text-xs text-slate-300 hidden sm:inline">•</span>
+                    <span className="text-xs text-slate-500 block sm:inline w-full sm:w-auto mt-0.5 sm:mt-0">{formattedDate}</span>
                   </div>
 
-                  <div className="text-sm font-semibold text-slate-800">
+                  <div className="text-xs sm:text-sm font-semibold text-slate-800 mt-1">
                     {order.items.map((i) => `${i.quantity}x ${i.menu_item_name}`).join(', ')}
                   </div>
                   <div className="text-xs font-black text-slate-900 mt-1">Total: ₹{order.total_amount}</div>
                 </div>
 
-                <div className="flex items-center gap-3 self-end sm:self-center">
+                <div className="flex items-center gap-2.5 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 w-full sm:w-auto justify-end">
                   {order.status === 'placed' && (
                     <button
                       onClick={() => handleCancelOrder(order.id)}

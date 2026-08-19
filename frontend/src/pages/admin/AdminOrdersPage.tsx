@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { orderApi } from '../../api/orderApi';
 import { Order, OrderStatus } from '../../types';
 import { ClipboardList } from 'lucide-react';
@@ -35,23 +35,24 @@ export const AdminOrdersPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-2">
-            <ClipboardList className="w-7 h-7 text-orange-600" />
-            Live Kitchen & Order Management
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 flex items-center gap-2">
+            <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 text-orange-600 shrink-0" />
+            <span>Live Kitchen & Order Management</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Advance orders through strict state machine: Placed → Confirmed → Preparing → Ready → Picked Up.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        {/* Filter Tabs Slider on Mobile */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer ${
-              filterStatus === 'all' ? 'bg-orange-600 text-white' : 'bg-white border border-slate-200 text-slate-700'
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition ${
+              filterStatus === 'all' ? 'bg-orange-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
             All
@@ -60,8 +61,8 @@ export const AdminOrdersPage: React.FC = () => {
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase cursor-pointer ${
-                filterStatus === st ? 'bg-orange-600 text-white' : 'bg-white border border-slate-200 text-slate-700'
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase whitespace-nowrap cursor-pointer transition ${
+                filterStatus === st ? 'bg-orange-600 text-white shadow-xs' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
               }`}
             >
               {st.replace('_', ' ')}
@@ -90,12 +91,12 @@ export const AdminOrdersPage: React.FC = () => {
               });
 
               return (
-                <div key={order.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50 transition">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
+                <div key={order.id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50 transition">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                       <span className="font-bold text-xs text-orange-600">#{order.id.slice(0, 8)}</span>
                       <span className="text-xs text-slate-400">•</span>
-                      <span className="font-extrabold text-sm text-slate-900">{order.customer_name || 'Customer'}</span>
+                      <span className="font-extrabold text-xs sm:text-sm text-slate-900">{order.customer_name || 'Customer'}</span>
                       <span className="text-xs text-slate-400">•</span>
                       <span className="text-xs text-slate-500">{formattedDate}</span>
                     </div>
@@ -111,17 +112,17 @@ export const AdminOrdersPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4 self-end md:self-center">
-                    <div className="text-right">
-                      <span className="text-xs text-slate-400 block">Total</span>
-                      <span className="text-base font-black text-slate-900">₹{order.total_amount}</span>
+                  <div className="flex items-center justify-between md:justify-end gap-4 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+                    <div className="text-left md:text-right">
+                      <span className="text-[10px] sm:text-xs text-slate-400 block">Total</span>
+                      <span className="text-sm sm:text-base font-black text-slate-900">₹{order.total_amount}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <select
                         value={order.status}
                         onChange={(e) => handleUpdateStatus(order.id, e.target.value as OrderStatus)}
-                        className="bg-white border border-slate-300 text-slate-800 font-bold text-xs rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 cursor-pointer uppercase"
+                        className="bg-white border border-slate-300 text-slate-800 font-bold text-xs rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-500 cursor-pointer uppercase shadow-xs"
                       >
                         {STATUS_OPTIONS.map((st) => (
                           <option key={st} value={st}>

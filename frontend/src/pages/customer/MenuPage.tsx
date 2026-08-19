@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { menuApi } from '../../api/menuApi';
 import { Category, MenuItem } from '../../types';
 import { AISearchHero } from '../../components/customer/AISearchHero';
@@ -40,52 +40,54 @@ export const MenuPage: React.FC = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <AISearchHero />
 
-      <div className="mt-12 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="mt-8 sm:mt-12 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
-            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-              <Utensils className="w-6 h-6 text-orange-500" />
-              Explore Full Restaurant Menu
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+              <Utensils className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500 shrink-0" />
+              <span>Explore Full Restaurant Menu</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
               Browse our handcrafted categories or use quick dietary filters.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Quick Dietary Filters */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setIsVegOnly(!isVegOnly)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 isVegOnly
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
               }`}
             >
               <Leaf className="w-3.5 h-3.5 text-emerald-500" />
-              Pure Veg Only
+              <span>Pure Veg Only</span>
             </button>
 
             <button
               onClick={() => setIsSpicyOnly(!isSpicyOnly)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
                 isSpicyOnly
                   ? 'bg-red-600 text-white shadow-xs'
                   : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
               }`}
             >
               <Flame className="w-3.5 h-3.5 text-red-500" />
-              Spicy Only
+              <span>Spicy Only</span>
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto py-4 scrollbar-none">
+        {/* Horizontal Category Slider for Mobile & Desktop */}
+        <div className="flex items-center gap-2 overflow-x-auto py-4 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
               selectedCategory === null
                 ? 'bg-orange-600 text-white shadow-xs'
                 : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -97,7 +99,7 @@ export const MenuPage: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
                 selectedCategory === cat.id
                   ? 'bg-orange-600 text-white shadow-xs'
                   : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -110,7 +112,7 @@ export const MenuPage: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
             <div key={n} className="bg-white rounded-2xl p-5 border border-slate-200 animate-pulse h-64" />
           ))}
@@ -122,7 +124,7 @@ export const MenuPage: React.FC = () => {
           <p className="text-xs text-slate-500 mt-1">Try clearing filters to see all available food items.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredItems.map((item) => (
             <MenuCard key={item.id} item={item} />
           ))}

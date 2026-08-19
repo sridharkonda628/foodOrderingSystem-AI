@@ -1,3 +1,13 @@
+"""
+Order and Order Item Database Models and Status Enum.
+
+Use Case:
+- Defines the `orders` and `order_items` tables.
+- Implements price snapshotting (storing `unit_price` and `subtotal` at checkout time)
+  to preserve financial integrity regardless of future menu price modifications.
+- Implements standard order lifecycle statuses via `OrderStatus`.
+"""
+
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
@@ -7,15 +17,28 @@ from app.db.base import Base
 
 
 class OrderStatus(str, Enum):
-    PLACED = "placed"
-    CONFIRMED = "confirmed"
-    PREPARING = "preparing"
-    READY = "ready"
-    PICKED_UP = "picked_up"
-    CANCELLED = "cancelled"
+    """
+    Enumeration of allowed order lifecycle states.
+
+    Use Case:
+    - Enforces state consistency across database records, API schemas, and state machine transitions.
+    """
+    PLACED = "placed"          # Customer submitted order
+    CONFIRMED = "confirmed"    # Restaurant acknowledged and accepted order
+    PREPARING = "preparing"    # Kitchen actively preparing the dishes
+    READY = "ready"            # Food packaged and awaiting delivery/pickup
+    PICKED_UP = "picked_up"    # Delivered or collected by customer (terminal success state)
+    CANCELLED = "cancelled"    # Cancelled by customer or admin (terminal abort state)
 
 
 class Order(Base):
+    """
+    Order ORM Entity.
+
+    Use Case:
+    - Represents the header of a customer order transaction, tracking status, customer ID,
+      calculated total amount, and delivery notes.
+    """
     __tablename__ = "orders"
 
     id: Mapped[str] = mapped_column(
@@ -64,6 +87,13 @@ class Order(Base):
 
 
 class OrderItem(Base):
+    """
+    OrderItem ORM Entity.
+
+    Use Case:
+    - Represents individual line items in an order.
+    - Stores `unit_price` and `subtotal` snapshots at time of purchase.
+    """
     __tablename__ = "order_items"
 
     id: Mapped[str] = mapped_column(

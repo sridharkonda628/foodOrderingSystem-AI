@@ -1,3 +1,13 @@
+"""
+Order Repository and Analytics Aggregation.
+
+Use Case:
+- Manages order creation, retrieval, and status updates in the database.
+- Implements high-performance SQL aggregation queries for the Real-time Restaurant Manager Dashboard
+  (calculates today's total orders, gross revenue, average order value, active kitchen orders,
+  status distribution, and top 5 best-selling items).
+"""
+
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Tuple, Dict, Any
 from sqlalchemy import select, func, desc
@@ -10,12 +20,31 @@ from app.models.category import Category
 
 
 class OrderRepository:
+    """
+    Repository handling persistence, status lifecycle, and analytics aggregation for Orders.
+    """
+
     @staticmethod
     async def create_order(
         db: AsyncSession,
         order: Order,
         items: List[OrderItem]
     ) -> Order:
+        """
+        Persists a new Order and its line items inside an atomic database transaction.
+
+        Use Case:
+        - Called by `OrderService.create_order` during customer checkout.
+        - Refreshes and loads customer and dish relationships for the returned model.
+
+        Parameters:
+        - db: The active async database session.
+        - order: The parent Order instance.
+        - items: The list of associated OrderItem instances.
+
+        Returns:
+        - Fully populated Order entity with items and customer relationship.
+        """
         db.add(order)
         for item in items:
             db.add(item)
@@ -35,6 +64,19 @@ class OrderRepository:
 
     @staticmethod
     async def get_by_id(db: AsyncSession, order_id: str) -> Optional[Order]:
+        """
+        Retrieves a single order by ID with customer details and line items loaded.
+
+        Use Case:
+        - Used for live order tracking, customer receipt view, and admin status updates.
+
+        Parameters:
+        - db: The active async database session.
+        - order_id: UUID string of the order.
+
+        Returns:
+        - Order entity if found, None otherwise.
+        """
         stmt = (
             select(Order)
             .options(
@@ -53,6 +95,21 @@ class OrderRepository:
         limit: int = 50,
         offset: int = 0
     ) -> List[Order]:
+        """
+        Retrieves order history for a specific customer, sorted newest first.
+
+        Use Case:
+        - Populates the customer's "My Orders" history page.
+
+        Parameters:
+        - db: The active async database session.
+        - customer_id: UUID of the authenticated user.
+        - limit: Maximum number of orders to fetch.
+        - offset: Pagination offset.
+
+        Returns:
+        - List of Order entities for this customer.
+        """
         stmt = (
             select(Order)
             .options(
@@ -74,6 +131,21 @@ class OrderRepository:
         limit: int = 100,
         offset: int = 0
     ) -> List[Order]:
+        """
+        Retrieves all restaurant orders, with optional status filtering and pagination.
+
+        Use Case:
+        - Powers the Admin Order Management table with real-time status filtering (e.g. view only 'preparing' orders).
+
+        Parameters:
+        - db: The active async database session.
+        - status: Optional status filter (e.g. 'placed', 'preparing').
+        - limit: Maximum number of records.
+        - offset: Pagination offset.
+
+        Returns:
+        - List of all matching Order entities across all customers.
+        """
         stmt = (
             select(Order)
             .options(
@@ -94,6 +166,20 @@ class OrderRepository:
         order: Order,
         new_status: str
     ) -> Order:
+        """
+        Updates an order's status and commits the change.
+
+        Use Case:
+        - Progresses orders through kitchen workflow (placed -> confirmed -> preparing -> ready -> picked_up).
+
+        Parameters:
+        - db: The active async database session.
+        - order: The existing Order entity.
+        - new_status: The target status string.
+
+        Returns:
+        - Updated Order entity.
+        """
         order.status = new_status
         await db.commit()
         await db.refresh(order)
@@ -101,6 +187,24 @@ class OrderRepository:
 
     @staticmethod
     async def get_dashboard_aggregates(db: AsyncSession) -> Dict[str, Any]:
+        """
+        Computes restaurant analytics via database aggregation.
+
+        Use Case:
+        - Powers the Admin Dashboard with operational insights:
+          1. Today's total orders and gross revenue (excluding cancelled orders).
+          2. Average order value (AOV) for today.
+          3. Live active kitchen orders count (placed, confirmed, preparing, ready).
+          4. Distribution breakdown of orders by status.
+          5. Top 5 highest selling menu items with units sold and revenue generated.
+          6. The 10 most recent orders.
+
+        Parameters:
+        - db: The active async database session.
+
+        Returns:
+        - Dictionary structured for `DashboardResponseData`.
+        """
         # Start of today in UTC
         now = datetime.now(timezone.utc)
         start_of_today = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
@@ -142,7 +246,7 @@ class OrderRepository:
         status_res = await db.execute(status_stmt)
         orders_by_status = [{"status": row.status, "count": int(row.count)} for row in status_res.all()]
 
-        # 4. Top selling items (all-time or today)
+        # 4. Top selling items (units sold and revenue generated)
         top_items_stmt = (
             select(
                 MenuItem.id.label("menu_item_id"),

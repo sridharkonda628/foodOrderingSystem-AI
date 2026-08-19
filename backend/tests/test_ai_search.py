@@ -1,9 +1,26 @@
+"""
+Natural Language AI Search Unit and Integration Tests.
+
+Use Case:
+- Validates the AI hybrid search capabilities:
+  1. Strict constraint extraction and filtering (vegetarian, spicy, price ceiling under ₹200).
+  2. Soft tag scoring (high-protein, light).
+  3. Query caching behavior for repeated searches.
+"""
+
 import pytest
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
 async def test_ai_search_query_spicy_vegetarian_under_200(client: AsyncClient):
+    """
+    Test Case: Natural Language Query with multi-factor constraints: "something spicy and vegetarian under 200 rupees".
+
+    Use Case:
+    - Verifies structured intent extraction: vegetarian=True, spicy=True, max_price=200.
+    - Verifies that all returned dishes strictly satisfy the constraints and include match explanations.
+    """
     search_payload = {
         "query": "something spicy and vegetarian under 200 rupees",
         "limit": 5
@@ -34,6 +51,12 @@ async def test_ai_search_query_spicy_vegetarian_under_200(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_ai_search_query_high_protein_and_light(client: AsyncClient):
+    """
+    Test Case: Natural Language Query with dietary preferences: "high protein food that is light".
+
+    Use Case:
+    - Verifies that dietary preference scoring prioritizes protein-rich and light dishes in the ranked output.
+    """
     res = await client.post(
         "/api/search",
         json={"query": "high protein food that is light", "limit": 5}
@@ -48,6 +71,12 @@ async def test_ai_search_query_high_protein_and_light(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_ai_search_caching(client: AsyncClient):
+    """
+    Test Case: In-memory Query Caching.
+
+    Use Case:
+    - Verifies that an identical second search returns `search_mode = 'cached'` with sub-millisecond latency.
+    """
     query = "healthy lunch not fried"
     
     # First search

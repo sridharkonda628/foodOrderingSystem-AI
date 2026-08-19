@@ -1,3 +1,14 @@
+"""
+Database Seed Script.
+
+Use Case:
+- Populates the database with initial essential data required for testing and demonstration:
+  1. Default Admin and Customer accounts with pre-hashed credentials.
+  2. 7 distinct restaurant menu categories (Starters, Main Course, Biryani, South Indian, Bowls, Beverages, Desserts).
+  3. 26 curated menu items specifically calibrated for natural language queries (e.g. price tags, spicy/veg flags, dietary tags like high-protein, non-fried, dairy-free).
+  4. Initial sample orders with varied lifecycle statuses for the Admin Analytics Dashboard.
+"""
+
 import asyncio
 from datetime import datetime, timezone, timedelta
 from app.core.security import get_password_hash
@@ -10,18 +21,26 @@ from sqlalchemy import select
 
 
 async def seed_data():
+    """
+    Main asynchronous seeding function.
+
+    Use Case:
+    - Checks whether the database already contains seeded data; if not, creates tables
+      and inserts initial users, categories, menu items, and sample orders.
+    - Ensures a complete, demo-ready state for both customer ordering and admin dashboard review.
+    """
     print("Connecting to database and creating tables...")
     await init_db()
 
     async with AsyncSessionLocal() as session:
-        # Check if already seeded
+        # Check if already seeded to prevent duplicate record insertion
         result = await session.execute(select(User).limit(1))
         if result.scalar_one_or_none():
             print("Database already contains data. Skipping initial seeding.")
             return
 
         print("Seeding Users...")
-        # 1. Users
+        # 1. Users: Seed Administrator and Customer sample accounts
         admin_user = User(
             email="admin@kpitech.com",
             hashed_password=get_password_hash("AdminPass123!"),
@@ -41,7 +60,7 @@ async def seed_data():
         await session.flush()
 
         print("Seeding Categories...")
-        # 2. Categories
+        # 2. Categories: Seed core culinary categories with display ordering
         categories_data = [
             {"name": "Starters & Appetizers", "slug": "starters", "description": "Crispy, tandoori, and flavorful quick bites", "display_order": 1},
             {"name": "Main Course", "slug": "main-course", "description": "Authentic North & South Indian rich curries and gravies", "display_order": 2},
@@ -66,7 +85,7 @@ async def seed_data():
             categories_map[cat.slug] = cat.id
 
         print("Seeding Menu Items...")
-        # 3. Rich Menu Dataset (26 Items specifically calibrated for NLP queries)
+        # 3. Rich Menu Dataset: 26 Items specifically calibrated for NLP queries & filtering
         menu_items_data = [
             # Starters
             {
@@ -389,10 +408,10 @@ async def seed_data():
         await session.flush()
 
         print("Seeding Initial Sample Orders for Admin Dashboard...")
-        # 4. Realistic Sample Orders
+        # 4. Realistic Sample Orders for Analytics & Live Tracking Demo
         now = datetime.now(timezone.utc)
         
-        # Order 1: Completed Order earlier today
+        # Order 1: Completed Picked-Up Order earlier today
         order1 = Order(
             customer_id=customer_user.id,
             status=OrderStatus.PICKED_UP.value,
@@ -436,4 +455,5 @@ async def seed_data():
 
 
 if __name__ == "__main__":
+    # Execute seeding when invoked directly via CLI (e.g. python -m app.seed)
     asyncio.run(seed_data())

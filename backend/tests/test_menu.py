@@ -1,9 +1,24 @@
+"""
+Menu and Category Management Integration Tests.
+
+Use Case:
+- Validates category listing, vegetarian filtering, admin role enforcement for dish creation,
+  and dish availability toggling.
+"""
+
 import pytest
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
 async def test_list_categories_and_menu_items(client: AsyncClient):
+    """
+    Test Case: Public Menu Browsing.
+
+    Use Case:
+    - 1. Fetches categories and verifies seeded categories exist.
+    - 2. Filters dishes by `is_vegetarian=true` and asserts all returned items are vegetarian.
+    """
     # 1. Categories
     cat_res = await client.get("/api/menu/categories")
     assert cat_res.status_code == 200
@@ -20,6 +35,14 @@ async def test_list_categories_and_menu_items(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_admin_menu_management(client: AsyncClient, admin_token: str, customer_token: str):
+    """
+    Test Case: Role-restricted Menu Item Creation and Availability Toggling.
+
+    Use Case:
+    - 1. Verifies that customers cannot create menu items (HTTP 403 Forbidden).
+    - 2. Verifies that admins can create new menu items with full attributes.
+    - 3. Verifies that admins can toggle dish availability (in stock vs 86'd).
+    """
     # 1. Customer cannot create menu item (Forbidden 403)
     create_payload = {
         "name": "Unauthorized Dish",

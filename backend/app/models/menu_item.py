@@ -1,3 +1,12 @@
+"""
+Menu Item Database Model.
+
+Use Case:
+- Defines the `menu_items` table storing individual culinary dishes.
+- Contains rich metadata for AI hybrid search and filtering: pricing, vegetarian flag,
+  spiciness flag, JSON dietary tags, live availability status, and popularity score.
+"""
+
 import uuid
 from datetime import datetime, timezone
 from typing import List
@@ -7,6 +16,13 @@ from app.db.base import Base
 
 
 class MenuItem(Base):
+    """
+    MenuItem ORM Entity.
+
+    Use Case:
+    - Represents a dish on the restaurant menu.
+    - Queried by customers browsing categories, searched by AI NLP engine, and added to orders.
+    """
     __tablename__ = "menu_items"
 
     id: Mapped[str] = mapped_column(
